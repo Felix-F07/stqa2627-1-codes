@@ -8,7 +8,7 @@ import requests
 from selenium import webdriver
 from app import app as flask_app
 
-BASE_URL = getenv('BASE_URL', 'http://localhost:5000')
+BASE_URL = getenv('BASE_URL', 'http://127.0.0.1:5000')
 WAIT_SECONDS = int(getenv('WAIT_SECONDS', '60'))
 
 def before_all(context):
