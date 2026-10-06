@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hit Counter</title>
+</head>
+<body>
+<h1>Hit the Button!</h1>
+<button id="hit-button">Hit</button>
+<div id="counter-display">
+<p>The button has been hit <span id="counter">{{ counter }}</span> times.</p>
+</div>
+
+<script>
+    const hitButton = document.getElementById('hit-button');
+    const counterSpan = document.getElementById('counter');
+
+    hitButton.addEventListener('click', () => {
+        fetch('/hit', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                counterSpan.textContent = data.hits;
+            })
+            .catch(error => console.error('Error:', error));
+    });
+</script>
+
+</body>
+</html>
