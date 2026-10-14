@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pet Shop</title>
+<style>
+body {
+font-family: sans-serif;
+margin: 2rem;
+line-height: 1.6;
+}
+form, #results-section {
+margin-bottom: 2rem;
+padding: 1rem;
+border: 1px solid #ccc;
+border-radius: 5px;
+}
+input, select {
+padding: 0.5rem;
+margin-right: 0.5rem;
+border: 1px solid #ccc;
+border-radius: 3px;
+}
+button {
+padding: 0.5rem 1rem;
+border: none;
+border-radius: 3px;
+cursor: pointer;
+background-color: #007bff;
+color: white;
+margin-right: 0.5rem;
+}
+.results-list {
+margin-top: 1rem;
+border: 1px solid #ddd;
+padding: 1rem;
+background-color: #f9f9f9;
+}
+.pet-item {
+border-bottom: 1px dashed #eee;
+padding: 0.5rem 0;
+}
+#flash_message {
+color: green;
+font-weight: bold;
+margin-top: 1rem;
+}
+.action-buttons button {
+margin-top: 1rem;
+}
+</style>
+</head>
+<body>
+<h1>Welcome to the Pet Shop!</h1>
+
+<div id="flash_message"></div>
+
+<!-- SINGLE CRUD FORM -->
+<form id="pet-form">
+    <h2>Pet Operations</h2>
+    <input type="text" id="pet_id" placeholder="Pet ID (for update/delete/search)">
+    <input type="text" id="pet_name" placeholder="Name">
+    <input type="text" id="pet_category" placeholder="Category">
+    <label for="pet_available">Available:</label>
+    <input type="checkbox" id="pet_available" checked>
+    <label for="pet_gender">Gender:</label>
+    <select id="pet_gender">
+        <option value="MALE">MALE</option>
+        <option value="FEMALE">FEMALE</option>
+    </select>
+    <label for="pet_birthday">Birthday:</label>
+    <input type="date" id="pet_birthday">
+
+    <div class="action-buttons">
+        <button type="button" id="create-btn">Create</button>
+        <button type="button" id="update-btn">Update</button>
+        <button type="button" id="delete-btn">Delete</button>
+        <button type="button" id="search-btn">Search</button>
+    </div>
+</form>
+
+<div id="results-section">
+    <h2>Pet List</h2>
+    <button id="list-all-btn">List All Pets</button>
+    <div id="search_results" class="results-list">
+        <!-- Search results and all pets will be displayed here -->
+    </div>
+</div>
+
+<script>
+    const flashMessage = document.getElementById('flash_message');
+    const petForm = document.getElementById('pet-form');
+    const resultsDiv = document.getElementById('search_results');
+
+    const petIdInput = document.getElementById('pet_id');
+    const petNameInput = document.getElementById('pet_name');
+    const petCategoryInput = document.getElementById('pet_category');
+    const petAvailableInput = document.getElementById('pet_available');
+    const petGenderInput = document.getElementById('pet_gender');
+    const petBirthdayInput = document.getElementById('pet_birthday');
+    
+    const createButton = document.getElementById('create-btn');
+    const updateButton = document.getElementById('update-btn');
+    const deleteButton = document.getElementById('delete-btn');
+    const searchButton = document.getElementById('search-btn');
+    const listAllButton = document.getElementById('list-all-btn');
+
+    function displayMessage(message, isSuccess = true) {
+        flashMessage.textContent = message;
+        flashMessage.style.color = isSuccess ? 'green' : 'red';
+    }
+
+    function displayPets(data) {
+        resultsDiv.innerHTML = '';
+        if (data.length > 0) {
+            data.forEach(pet => {
+                const petElement = document.createElement('div');
+                petElement.className = 'pet-item';
+                petElement.innerHTML = `<strong>ID:</strong> ${pet.id}, <strong>Name:</strong> ${pet.name}, <strong>Category:</strong> ${pet.category}, <strong>Available:</strong> ${pet.available}, <strong>Gender:</strong> ${pet.gender}, <strong>Birthday:</strong> ${pet.birthday}`;
+                resultsDiv.appendChild(petElement);
+            });
+        } else {
+            resultsDiv.textContent = 'No pets found.';
+        }
+    }
+
+    function getPetData() {
+        return {
+            name: petNameInput.value,
+            category: petCategoryInput.value,
+            available: petAvailableInput.checked,
+            gender: petGenderInput.value,
+            birthday: petBirthdayInput.value
+        };
+    }
+
+    // Event listeners for CRUD operations
+    createButton.addEventListener('click', () => {
+        const newPet = getPetData();
+        fetch('/pets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newPet)
+        })
+        .then(response => {
+            if (response.ok) {
+                displayMessage('Success');
+                petForm.reset();
+                fetch('/pets').then(res => res.json()).then(displayPets);
+            } else {
+                displayMessage('Failed to create pet.', false);
+            }
+        });
+    });
+
+    updateButton.addEventListener('click', () => {
+        const petId = petIdInput.value;
+        if (!petId) {
+            displayMessage('Pet ID is required for updating.', false);
+            return;
+        }
+        const updatedData = getPetData();
+        fetch(`/pets/${petId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        })
+        .then(response => {
+            if (response.ok) {
+                displayMessage('Success');
+                petForm.reset();
+                fetch('/pets').then(res => res.json()).then(displayPets);
+            } else {
+                displayMessage('Failed to update pet.', false);
+            }
+        });
+    });
+
+    deleteButton.addEventListener('click', () => {
+        const petId = petIdInput.value;
+        if (!petId) {
+            displayMessage('Pet ID is required for deleting.', false);
+            return;
+        }
+        fetch(`/pets/${petId}`, { method: 'DELETE' })
+        .then(response => {
+            if (response.status === 204) {
+                displayMessage('Success');
+                petForm.reset();
+                fetch('/pets').then(res => res.json()).then(displayPets);
+            } else {
+                displayMessage('Failed to delete pet.', false);
+            }
+        });
+    });
+
+    // Event listeners for search and list
+    searchButton.addEventListener('click', () => {
+        const category = petCategoryInput.value;
+        fetch(`/pets?category=${category}`)
+            .then(response => response.json())
+            .then(data => {
+                displayMessage('Success');
+                displayPets(data);
+            })
+            .catch(() => displayMessage('Search failed.', false));
+    });
+
+    listAllButton.addEventListener('click', () => {
+        fetch('/pets')
+            .then(response => response.json())
+            .then(data => {
+                displayMessage('Success');
+                displayPets(data);
+            })
+            .catch(() => displayMessage('Failed to list pets.', false));
+    });
+</script>
+
+</body>
+</html>
