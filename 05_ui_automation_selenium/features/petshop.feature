@@ -11,6 +11,7 @@ Background:
         | Kitty      | cat      | True      | FEMALE  | 2020-08-13 |
         | Leo        | lion     | False     | MALE    | 2021-04-01 |
 
+@continue_after_failed_step
 Scenario: Search for dogs
     Given I am on the "Home Page"
     When I set the "Category" to "dog"
